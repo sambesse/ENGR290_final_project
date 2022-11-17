@@ -13,4 +13,4 @@ uint32_t getRightDistance();
 uint32_t getFrontDistance();
 
 //return the angular velocity in the yaw axis as int16_t
-int16_t getYawRate();  
+int16_t getYawRate();
