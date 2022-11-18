@@ -3,6 +3,7 @@
 
 #define TWI_BUFFER_LENGTH (10)
 #include <Arduino.h>
+#include "timing.h"
 typedef struct {
   uint8_t buf [TWI_BUFFER_LENGTH];
   uint8_t readPtr = 0;

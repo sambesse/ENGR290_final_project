@@ -7,6 +7,7 @@ uint8_t nextTxByte = 0;
 uint8_t nextRxByte = 0;
 uint8_t RNW = 0;
 uint8_t remainingBytes = 0;
+extern uint8_t semaphore;
 
 void produce_byte(FIFOBuffer* fifobuffer, const uint8_t data);
 uint8_t consume_byte(FIFOBuffer* fifobuffer);
@@ -14,13 +15,14 @@ uint8_t consume_byte(FIFOBuffer* fifobuffer);
 void TWI_isr(void) {
   switch(TWSR) {
     case 0x08:  //start has been transmitted
-      TWDR = targetAddr << 1 | RNW;
+      TWDR = targetAddr << 1 | 0; //write
       TWCR |= (1 << 7); //clear TWINT
       TWCR &= ~(1 << 5); //clear start
       break;
-    case 0x10: //repeated start
-      TWDR = targetAddr << 1 | RNW;
+    case 0x10: //repeated start, only happeens in the reading mode
+      TWDR = targetAddr << 1 | 1; //read
       TWCR |= (1 << 7);
+      TWCR &= ~(1 << 5); //clear start
       break;
     case 0x18: // addr + write transmiteed ack recieved
       TWDR = consume_byte(&txBuffer);
@@ -29,12 +31,16 @@ void TWI_isr(void) {
     case 0x20: //add + write transmitted nack recieved
       TWCR |= (1 << 7) | (1 << 5); //reset interrupt and retransmit start
       break;
-    case 0x28:
-      if(--remainingBytes) {
-        TWDR = consume_byte(&txBuffer);
-        TWCR |= (1 << 7); //clear interrupt 
+    case 0x28://data byte transmitted and ack recieved
+      if(RNW) {//this means register address sent and ack recieved, now retransmit start
+        TWCR |= (1 << 7) | (1 << 5); //clear interrupt and send restart
       } else {
-        TWCR |= (1 << 7) | (1 << 4); // clear interrupt and assert stop
+        if(--remainingBytes) {
+          TWDR = consume_byte(&txBuffer);
+          TWCR |= (1 << 7); //clear interrupt 
+        } else {
+          TWCR |= (1 << 7) | (1 << 4); // clear interrupt and assert stop
+        }
       }
       break;
     case 30: //data byte transmiteed and nack recieved, idk?
@@ -66,6 +72,7 @@ void TWI_isr(void) {
       } else {
         TWCR = (1 << 7);
         TWCR &= ~(1 << 6);
+        semaphore |= TWI_DATA_READY_SEMAPHORE; //signal that data is ready
       }
       break;
     case 0x58: //data  byte reieved and nack returned
@@ -87,7 +94,26 @@ void initTWI(const uint8_t slaveAddr) {
 void writeTWI(const uint8_t regAddr, const uint8_t data) {
   produce_byte(&txBuffer, regAddr);
   produce_byte(&txBuffer, data);
+  RNW = 0; //set to write mode
   TWCR |= (1 << 5); //set START bit
+}
+
+void requestTWI(const uint8_t regAddr, const uint8_t len) {
+  produce_byte(&txBuffer, regAddr);
+  RNW = 1; //set to read mode
+  TWCR |= (1 << 5); //start
+}
+
+void receiveTWI(uint8_t* data, const uint8_t len) {
+  if (rxBuffer.readPtr + len < TWI_BUFFER_LENGTH) {
+    memcpy(rxBuffer.buf + rxBuffer.readPtr, data, len);
+    rxBuffer.readPtr += len;
+    if (rxBuffer.readPtr == rxBuffer.writePtr) {//if you've caught up reset the buffer
+      rxBuffer.readPtr = rxBuffer.writePtr = 0;
+    }
+  } else {
+    //TODO: do something, but things are fucked
+  }
 }
 
 void produce_byte(FIFOBuffer* fifobuffer, const uint8_t data) {
