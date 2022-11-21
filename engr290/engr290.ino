@@ -12,17 +12,16 @@ typedef struct {
 
 typedef struct {
   float frontDistance; //would rather this be an int, but we'll see
-  uint16_t dxl; //rate of change of left distance sensor
-  uint16_t dxr; //rate of change of right distance sensor
+  //uint16_t dxl; //rate of change of left distance sensor
+  //uint16_t dxr; //rate of change of right distance sensor
   float orientation = 0; //yaw angle relative to starting point
   uint16_t dxf; //rate of change of front sensor
-  float vel; //potentially leave this in there for the velocity gotten from acc integration if we choose to implement that
+  //float vel; //potentially leave this in there for the velocity gotten from acc integration if we choose to implement that
 } PositionData;
 
 typedef struct {
   uint8_t LNR; //which side is farther away 0 for right > 0 for left
   uint16_t servoNum; //value used for PWM, can use LUT for this
-  
 } ControlData;
 
 enum State {STRAIGHT, TURNING}; 
