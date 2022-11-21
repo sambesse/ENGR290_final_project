@@ -1,5 +1,8 @@
-#include <ADC.h> 
+#ifndef SENSORS_H
+#define SENSORS_H
+
 #include <Arduino.h>
+#include "TWI.h"
 
 //sensor header, includes the sampling of all distance sensors and IMU
 #define IMU_ADDR 0x68 
@@ -54,3 +57,5 @@ void initFrontSensor(USSensorData* frontSensorData);
 
 //initiailze ADC needed for reading IR sensors
 void initIRSensors();
+
+#endif

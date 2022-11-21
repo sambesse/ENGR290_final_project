@@ -1,8 +1,6 @@
 #ifndef TIMING_H
 #define TIMING_H
 #include <Arduino.h>
-uint32_t msTimeElapsed;
-uint8_t semaphore = 0; //TODO: need to figure out where to place this to make it accessible in all headers.
 
 #define IMU_SEMAPHORE (1 << 7) //period of 125us, I2C clock rate of 400KHz. 
 #define IR_SEMAPHORE (1 << 6) //longest possible measurement period from device is 47ms. 400 longer period than IMU

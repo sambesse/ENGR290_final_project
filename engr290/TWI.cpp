@@ -138,6 +138,10 @@ void receiveTWI(uint8_t* data, const uint8_t len) {
   }
 }
 
+void receiveTWI(uint16_t* data) {
+  receiveTWI((uint8_t*)data, 2);
+}
+
 void produce_byte(FIFOBuffer* fifobuffer, const uint8_t data) {
   if (fifobuffer->writePtr < TWI_BUFFER_LENGTH-1) {
     fifobuffer->buf[fifobuffer->writePtr++] = data;

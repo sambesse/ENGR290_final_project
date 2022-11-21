@@ -1,19 +1,19 @@
 #include "sensors.h"
-USSensorData* sensorData; 
+USSensorData* data; 
 ADCData* currentADC;
 
 void int1_isr(void) {//configured to trigger on every edge of the pulse line
   if(data->semaphore & IN_PULSE) {
-    pulseEnd = TCNT1;
+    data->pulseEnd = TCNT1;
     data->semaphore &= ~IN_PULSE;
-    if (pulseEnd < pulseStart) {
-      pulseLength = (65535 - pulseStart) + pulseEnd;
+    if (data->pulseEnd < data->pulseStart) {
+      data->pulseLength = (65535 - data->pulseStart) + data->pulseEnd;
     } else {
-      pulseLength = pulseStart - pulseEnd; 
+      data->pulseLength = data->pulseStart - data->pulseEnd; 
     }
     data->semaphore |= DATA_READY;
   } else {
-    pulseStart = TCNT1;
+    data->pulseStart = TCNT1;
     data->semaphore |= IN_PULSE;
   }
   EIFR |= 1 << 1; // clear interrupt 1 flag
@@ -22,7 +22,7 @@ void int1_isr(void) {//configured to trigger on every edge of the pulse line
 void adc_isr(void) {
   currentADC->adcResult = ADC;
   currentADC->semaphore |= DATA_READY;
-  ADCSCRA |= (1 << 4); //clear interrupt
+  ADCSRA |= (1 << 4); //clear interrupt
 }
 
 void initIMU() {

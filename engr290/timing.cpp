@@ -1,5 +1,6 @@
 #include "timing.h"
 uint16_t count =0;
+extern uint8_t semaphore; 
 void timer0_isr(void) { // this may be too fast, because the procesor runs so slowly. 
   count++;
   semaphore |= IMU_SEMAPHORE;
