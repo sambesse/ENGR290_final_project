@@ -1,20 +1,20 @@
 #include "sensors.h"
 USSensorData* data; 
 ADCData* currentADC;
+uint8_t level;
 
 ISR(INT1_vect) {//configured to trigger on every edge of the pulse line
-  if(data->semaphore & IN_PULSE) {
+  level = PIND & (1 << 3); //check the pin level
+  if(!level) {
     data->pulseEnd = TCNT1;
-    data->semaphore &= ~IN_PULSE;
     if (data->pulseEnd < data->pulseStart) {
       data->pulseLength = (65535 - data->pulseStart) + data->pulseEnd;
     } else {
-      data->pulseLength = data->pulseStart - data->pulseEnd; 
+      data->pulseLength = data->pulseEnd - data->pulseStart;
     }
     data->semaphore |= DATA_READY;
   } else {
     data->pulseStart = TCNT1;
-    data->semaphore |= IN_PULSE;
   }
   EIFR |= 1 << 1; // clear interrupt 1 flag
 }
@@ -57,8 +57,11 @@ void startIRReading(ADCData* dataPtr) {
 void initFrontSensor(USSensorData* frontSensorData) {
   data = frontSensorData;
   data->semaphore = 0;
+  DDRD &= ~(1 << 3);
   EICRA = 0x04; //set interrupt 1 for any logic change 
   EIMSK = 0x02; //enable interrupt 1
+  TCCR1A = 0;
+  TCCR1B = 3; //set up prescaler of 256 
 }
 
 void initIRSensors() {

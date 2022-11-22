@@ -39,17 +39,9 @@ void setup() {
   leftSensor.adcMux = LEFT_SENSOR_MUX_VAL;
   rightSensor.adcMux = RIGHT_SENSOR_MUX_VAL;
   initTiming();
-  initIMU();
+  //initIMU();
   //initIRSensors();
-  //initFrontSensor(&frontSensor);
-  requestTWI(GYRO_YAW_START, 2);
-  uint8_t cnt = 0;
-  while(!(semaphore & TWI_DATA_READY_SEMAPHORE)) {
-    Serial.print(semaphore, BIN);  
-  }
-  receiveTWI(&rawData.yawRate);
-  Serial.print("received yaw rate: ");
-  Serial.println(rawData.yawRate);
+  initFrontSensor(&frontSensor);
 }
 
 void loop() {
@@ -91,8 +83,11 @@ void loop() {
     rawData.rightSensorData = rightSensor.adcResult;
     rightSensor.semaphore &= ~DATA_READY;
   }
+  //*/
+  //*
   if(frontSensor.semaphore & DATA_READY) {
     rawData.frontSensorData = frontSensor.pulseLength;
+    Serial.println(rawData.frontSensorData);
     frontSensor.semaphore &= ~DATA_READY;
   }
   //*/

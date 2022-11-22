@@ -15,7 +15,7 @@ void printTWIStatus();
 
 ISR(TWI_vect) {
   Serial.println("inside TWI int");
-  printTWIStatus();
+  ///printTWIStatus();
   switch(TWSR) {
     case 0x08:  //start has been transmitted
       TWDR = targetAddr << 1 | 0; //write
@@ -86,7 +86,7 @@ ISR(TWI_vect) {
       semaphore &= ~TWI_BUSY_SEMAPHORE;
       semaphore |= TWI_DATA_READY_SEMAPHORE; //signal that data is ready
       Serial.println("DATA READY");
-      printTWIStatus();
+      //printTWIStatus();
       break;
   }
 }
