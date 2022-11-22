@@ -2,7 +2,7 @@
 USSensorData* data; 
 ADCData* currentADC;
 
-void int1_isr(void) {//configured to trigger on every edge of the pulse line
+ISR(INT1_vect) {//configured to trigger on every edge of the pulse line
   if(data->semaphore & IN_PULSE) {
     data->pulseEnd = TCNT1;
     data->semaphore &= ~IN_PULSE;
@@ -19,7 +19,7 @@ void int1_isr(void) {//configured to trigger on every edge of the pulse line
   EIFR |= 1 << 1; // clear interrupt 1 flag
 }
 
-void adc_isr(void) {
+ISR(ADC_vect) {
   currentADC->adcResult = ADC;
   currentADC->semaphore |= DATA_READY;
   ADCSRA |= (1 << 4); //clear interrupt
@@ -28,13 +28,30 @@ void adc_isr(void) {
 void initIMU() {
   uint8_t configString [3] = {0x01, GYRO_250, ACCEL_2G}; //set DLPF on, gyro to +-250 and accel to +-2g
   initTWI(IMU_ADDR);
+  //Serial.println("TWI initialized");
+  //delay(100);
   writeTWI(CONFIG_ADDR, configString, 3); //TODO: need to make this function for burst write, already taken care of in ISR
+  //Serial.println("after IMU config");
+  //delay(100);
 }
 
 void startIRReading(ADCData* dataPtr) {
   currentADC = dataPtr;
-  ADMUX = dataPtr->adcMux; 
-  ADCSRA |= (1 << 7);
+  ADMUX = dataPtr->adcMux;
+  ADCSRA |= (1 << 6);
+  uint8_t i = 0;
+  while(ADCSRA & (1 << 6)) {
+    i++;
+  }
+  Serial.println("ADC conversion complete");
+  Serial.print("ADC MUX: ");
+  Serial.println(ADMUX, HEX);
+  Serial.print("ADC status register: ");
+  Serial.println(ADCSRA, HEX);
+  Serial.print("ADC result: ");
+  Serial.println(ADC);
+  dataPtr->adcResult = ADC;
+  dataPtr->semaphore |= DATA_READY;
 }
 
 void initFrontSensor(USSensorData* frontSensorData) {
@@ -46,6 +63,6 @@ void initFrontSensor(USSensorData* frontSensorData) {
 
 void initIRSensors() {
   DDRC &= ~(1 << 3);
-  //TODO set other IR pin as input as well
-  ADCSRA = 0x88; //enable ADC without interrupt, maybe make nonblocking in the future
+  DDRC &= ~(1 << 2); //set PC2 and PC3 as input
+  ADCSRA = 0x80; //enable ADC with interrupt, nonblocking
 }

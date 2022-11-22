@@ -8,7 +8,7 @@
 #define TWI_BUSY_SEMAPHORE (1 << 4)
 //the US sensor doesn't require any control signal, it will simply output pulses on the pulse pin continuously
 
-#define TIMER0_CNTIN (255 - 125) //125 counts with a prescalar of 1 gives 125us with a 1MHz io clock
+#define TIMER2_CNTIN (255 - 125) //125 counts with a prescalar of 1 gives 125us with a 1MHz io clock
 
 void initTiming();
 

@@ -19,12 +19,7 @@ typedef struct {
   //float vel; //potentially leave this in there for the velocity gotten from acc integration if we choose to implement that
 } PositionData;
 
-typedef struct {
-  uint8_t LNR; //which side is farther away 0 for right > 0 for left
-  uint16_t servoNum; //value used for PWM, can use LUT for this
-} ControlData;
-
-enum State {STRAIGHT, TURNING}; 
+enum State {STRAIGHT, TURNING};
 
 State state = STRAIGHT;
 USSensorData frontSensor;
@@ -34,30 +29,65 @@ SensorData rawData;
 uint8_t semaphore = 0;
 
 void setup() {
+  Serial.begin(9600); // comment out for actual run
+  delay(50);
+  Serial.println("start");
+  rawData.leftSensorData = 0;
+  rawData.rightSensorData = 0;
+  rawData.frontSensorData = 0;
+  rawData.yawRate = 0; 
+  leftSensor.adcMux = LEFT_SENSOR_MUX_VAL;
+  rightSensor.adcMux = RIGHT_SENSOR_MUX_VAL;
+  initTiming();
   initIMU();
-  initIRSensors();
-  initFrontSensor(&frontSensor);
+  //initIRSensors();
+  //initFrontSensor(&frontSensor);
+  requestTWI(GYRO_YAW_START, 2);
+  uint8_t cnt = 0;
+  while(!(semaphore & TWI_DATA_READY_SEMAPHORE)) {
+    Serial.print(semaphore, BIN);  
+  }
+  receiveTWI(&rawData.yawRate);
+  Serial.print("received yaw rate: ");
+  Serial.println(rawData.yawRate);
 }
 
 void loop() {
+  /*
   if(semaphore & IR_SEMAPHORE) {
+    Serial.println("inside ir semaphore");
     startIRReading(&leftSensor);
     semaphore &= ~IR_SEMAPHORE; 
   }
+  //*/
+  /*
   if(semaphore & IMU_SEMAPHORE) {
+    Serial.println("inside IMU semaphore loop");
     requestTWI(GYRO_YAW_START, 2);
     semaphore &= ~IMU_SEMAPHORE;
   }
+  //*/
+  /*
   if(leftSensor.semaphore & DATA_READY) {
+    Serial.println("left sensor data ready");
+    Serial.println(ADC);
     startIRReading(&rightSensor);
     rawData.leftSensorData = leftSensor.adcResult;
     leftSensor.semaphore &= ~DATA_READY;
   }
+  //*/
+  /*
   if(semaphore & TWI_DATA_READY_SEMAPHORE) {
     receiveTWI(&rawData.yawRate);
-    semaphore &= TWI_DATA_READY_SEMAPHORE;
+    Serial.print("received yaw rate: ");
+    Serial.println(rawData.yawRate);
+    semaphore &= ~TWI_DATA_READY_SEMAPHORE;
   }
+  //*/
+  /*
   if(rightSensor.semaphore & DATA_READY) {
+    Serial.println("right sensor data ready");
+    Serial.println(ADC);
     rawData.rightSensorData = rightSensor.adcResult;
     rightSensor.semaphore &= ~DATA_READY;
   }
@@ -65,4 +95,11 @@ void loop() {
     rawData.frontSensorData = frontSensor.pulseLength;
     frontSensor.semaphore &= ~DATA_READY;
   }
+  //*/
+  /*
+  Serial.print("left sensor: "); delay(50); Serial.println(rawData.leftSensorData); delay(50); 
+  Serial.print("right sensor: "); delay(50); Serial.println(rawData.rightSensorData); delay(50); 
+  //Serial.print("front sensor: "); delay(50); Serial.println(rawData.frontSensorData); delay(50); 
+  //Serial.print("yaw rate: "); delay(50); Serial.println(rawData.yawRate); delay(50); 
+  //*/
 }

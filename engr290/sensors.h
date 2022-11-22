@@ -4,6 +4,16 @@
 #include <Arduino.h>
 #include "TWI.h"
 
+/*all connections
+* P14 left IR sensor
+* P16 right IR sensor
+* P2 servo motor
+* P13 front US Sensor
+* P17 lift fan
+* P3 thrust fan
+* P17 IMU
+*/
+
 //sensor header, includes the sampling of all distance sensors and IMU
 #define IMU_ADDR 0x68 
 #define CONFIG_ADDR 0x1A
@@ -27,8 +37,8 @@
 #define ACCEL_YST 0x40
 #define ACCEL_ZST 0x20
 
-#define LEFT_SENSOR_MUX_VAL (0) //TODO make this correct
-#define RIGHT_SENSOR_MUX_VAL (1) //TODO make this correct
+#define LEFT_SENSOR_MUX_VAL (0x02) //TODO make this correct
+#define RIGHT_SENSOR_MUX_VAL (0xf) //TODO make this correct
 //constants fron US sensor semaphore
 #define IN_PULSE (1 << 7)
 #define DATA_READY (1 << 6)
