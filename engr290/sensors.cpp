@@ -27,7 +27,7 @@ ISR(ADC_vect) {
 
 void initIMU() {
   initTWI();
-  writeReg(CONFIG_ADDR, 0x01); //setup up weakest digital low pass filter
+  writeReg(CONFIG_ADDR, 0x02); //setup up weakest digital low pass filter
   writeReg(GYRO_CONFIG_ADDR, GYRO_250);
   writeReg(ACCEL_CONFIG_ADDR, ACCEL_2G);
 }

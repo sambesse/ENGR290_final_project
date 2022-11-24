@@ -2,7 +2,7 @@
 uint16_t count = 0;
 extern uint8_t semaphore; 
 
-ISR(TIMER2_OVF_vect) { // overflows every 2040us 
+ISR(TIMER2_OVF_vect) { // overflows every 256us 
     count++;
     semaphore |= IMU_SEMAPHORE;
     if (count == 5) {

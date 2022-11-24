@@ -2,6 +2,7 @@
 #include "TWI.h"
 #include "sensors.h"
 #include "timing.h"
+#include "position.h"
 
 void turnLeft();
 void turnRight();
@@ -28,6 +29,7 @@ enum State {STRAIGHT, TURNING};
 State state = STRAIGHT;
 USSensorData frontSensor;
 SensorData rawData;
+PositionData posData;
 uint8_t semaphore = 0;
 uint8_t cnt = 0;
 uint8_t LNR = 0;
@@ -40,16 +42,15 @@ void setup() {
   rawData.rightSensorData = 0;
   rawData.frontSensorData = 0;
   rawData.yawRate = 0;
+  posData.orientation = 0;
   initTiming();
   initIMU();
-  //initFrontSensor(&frontSensor);                                                                                                                                                                                                                                                                                 digitalWrite(4, HIGH);
+  //initFrontSensor(&frontSensor);
+  initPositionModel(posData.orientation);
   pinMode(7, OUTPUT);
   digitalWrite(7, HIGH); //turn on lift fan
   analogReference(5);
-  turnMiddle();
-  delay(500);
   turnLeft();
-
 }
 
 void loop() {
@@ -62,17 +63,10 @@ void loop() {
   //*/
   //*
   if(semaphore & IMU_SEMAPHORE) {
-    Serial.println("inside IMU semaphore loop");
+    //Serial.println("inside IMU semaphore loop");
     readRegN(GYRO_YAW_START, 2, &rawData.yawRate);
+    tickModel(rawData.yawRate);
     semaphore &= ~IMU_SEMAPHORE;
-  }
-  //*/
-  /*
-  if(semaphore & TWI_DATA_READY_SEMAPHORE) {
-    receiveTWI(&rawData.yawRate);
-    Serial.print("received yaw rate: ");
-    Serial.println(rawData.yawRate);
-    semaphore &= ~TWI_DATA_READY_SEMAPHORE;
   }
   //*/
   /*
@@ -101,11 +95,10 @@ void loop() {
   }
   //*/
   //*
-  Serial.print("left sensor: "); Serial.println(rawData.leftSensorData);
-  Serial.print("right sensor: "); Serial.println(rawData.rightSensorData); 
-  
-  //Serial.print("front sensor: "); delay(50); Serial.println(rawData.frontSensorData); delay(50); 
-  Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
+  //Serial.print("left sensor: "); Serial.println(rawData.leftSensorData);
+  //Serial.print("right sensor: "); Serial.println(rawData.rightSensorData); 
+  //Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
+  Serial.print("angle: "); Serial.println(posData.orientation);
   //*/
   /*
   if(semaphore & CONTROL_SEMAPHORE) {
@@ -137,6 +130,6 @@ void turnRight() {
   OCR0A = SERVO_RIGHT;
 }
 
-void turnMiddle() {
+void turnStraight() {
   OCR0A = SERVO_MIDDLE;
 }
