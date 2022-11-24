@@ -1,4 +1,5 @@
 #include "sensors.h"
+
 USSensorData* data; 
 ADCData* currentADC;
 uint8_t level;
@@ -27,28 +28,10 @@ ISR(ADC_vect) {
 
 void initIMU() {
   initTWI();
-  writeReg(CONFIG_ADDR, 0x02); //setup up weakest digital low pass filter
-  writeReg(GYRO_CONFIG_ADDR, GYRO_250);
-  writeReg(ACCEL_CONFIG_ADDR, ACCEL_2G);
-}
-
-void startIRReading(ADCData* dataPtr) {
-  currentADC = dataPtr;
-//  ADMUX = dataPtr->adcMux;
-//  ADCSRA |= (1 << 6);
-//  uint8_t i = 0;
-//  while(ADCSRA & (1 << 6)) {
-//    i++;
-//  }
-//  Serial.println("ADC conversion complete");
-//  Serial.print("ADC MUX: ");
-//  Serial.println(ADMUX, HEX);
-//  Serial.print("ADC status register: ");
-//  Serial.println(ADCSRA, HEX);
-//  Serial.print("ADC result: ");
-//  Serial.println(ADC);
-  dataPtr->adcResult = analogRead(A2);
-  dataPtr->semaphore |= DATA_READY;
+  writeReg(PWR_MGMT_1, 0x0B); //disable temp and set clock to yaw gyro
+  writeReg(PWR_MGMT_2, 0x3E); //disables everything but the yaw gyro
+  writeReg(CONFIG_ADDR, 0x01); //setup up weakest digital low pass filter
+  writeReg(GYRO_CONFIG_ADDR, GYRO_250); 
 }
 
 void initFrontSensor(USSensorData* frontSensorData) {
@@ -59,12 +42,4 @@ void initFrontSensor(USSensorData* frontSensorData) {
   EIMSK = 0x02; //enable interrupt 1
   TCCR1A = 0;
   TCCR1B = 3; //set up prescaler of 256 
-}
-
-void initIRSensors() {
-  DDRC &= ~(1 << 3);
-  DDRC &= ~(1 << 2); //set PC2 and PC3 as input
-  DIDR0 = 0;
-  ADMUX = 0;
-  ADCSRA = 0x80; //enable ADC with interrupt, nonblocking
 }
