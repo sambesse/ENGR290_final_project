@@ -11,7 +11,7 @@ typedef struct {
   uint16_t leftSensorData = 0;
   uint16_t rightSensorData = 0;
   uint16_t frontSensorData = 0;
-  uint16_t yawRate = 0;
+  int16_t yawRate = 0;
 } SensorData;
 
 typedef struct {
@@ -42,13 +42,9 @@ void setup() {
   rawData.yawRate = 0;
   initTiming();
   initIMU();
-  //initFrontSensor(&frontSensor);
-  //DDRD |= (1 << 4); //lift fan output
-  //PORTD &= (1 << 4); //turn lift fan on maybe
-  //pinMode(4, OUTPUT);
-  //                                                                                                                                                                                                                                                                                  digitalWrite(4, HIGH);
+  //initFrontSensor(&frontSensor);                                                                                                                                                                                                                                                                                 digitalWrite(4, HIGH);
   pinMode(7, OUTPUT);
-  digitalWrite(7, HIGH);
+  digitalWrite(7, HIGH); //turn on lift fan
   analogReference(5);
   turnLeft();
 }
@@ -61,10 +57,10 @@ void loop() {
     semaphore &= ~IR_SEMAPHORE;
   }
   //*/
-  /*
+  //*
   if(semaphore & IMU_SEMAPHORE) {
     Serial.println("inside IMU semaphore loop");
-    readRegN(GYRO_YAW_START, &rawData.yawRate, 2);
+    readRegN(GYRO_YAW_START, 2, &rawData.yawRate);
     semaphore &= ~IMU_SEMAPHORE;
   }
   //*/
@@ -102,11 +98,11 @@ void loop() {
   }
   //*/
   //*
-  Serial.print("left sensor: "); delay(50); Serial.println(rawData.leftSensorData); delay(50); 
-  Serial.print("right sensor: "); delay(50); Serial.println(rawData.rightSensorData); delay(50); 
+  Serial.print("left sensor: "); Serial.println(rawData.leftSensorData);
+  Serial.print("right sensor: "); Serial.println(rawData.rightSensorData); 
   
   //Serial.print("front sensor: "); delay(50); Serial.println(rawData.frontSensorData); delay(50); 
-  //Serial.print("yaw rate: "); delay(50); Serial.println(rawData.yawRate); delay(50); 
+  Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
   //*/
   /*
   if(semaphore & CONTROL_SEMAPHORE) {

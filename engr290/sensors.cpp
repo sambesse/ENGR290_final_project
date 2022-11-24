@@ -26,13 +26,10 @@ ISR(ADC_vect) {
 }
 
 void initIMU() {
-  uint8_t configString [3] = {0x01, GYRO_250, ACCEL_2G}; //set DLPF on, gyro to +-250 and accel to +-2g
   initTWI();
-  //Serial.println("TWI initialized");
-  //delay(100);
-  //writeReg(CONFIG_ADDR, configString, 3); //TODO: need to make this function for burst write, already taken care of in ISR
-  //Serial.println("after IMU config");
-  //delay(100);
+  writeReg(CONFIG_ADDR, 0x01); //setup up weakest digital low pass filter
+  writeReg(GYRO_CONFIG_ADDR, GYRO_250);
+  writeReg(ACCEL_CONFIG_ADDR, ACCEL_2G);
 }
 
 void startIRReading(ADCData* dataPtr) {
