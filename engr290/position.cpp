@@ -14,12 +14,10 @@ void initPositionModel(float& ori) {
 
 void tickModel(int16_t &latestSample) {
   currentSample = millis();
-  if(latestSample - gyroBias > 50 || latestSample - gyroBias < -50) { //only take values that differ from the 0 point.
-    if (latestSample > prevSample) {
-      *acc += (int)((((latestSample - prevSample) / 2) + prevSample) * gyroScaler) * (float)(currentSample - lastSample) / 1000.0 * 8.0;
-    } else if (prevSample > latestSample) {
-      *acc += ((((prevSample - latestSample) / 2.0) + latestSample) * gyroScaler) * (currentSample - lastSample) / 1000.0 * 8.0;
-    }
+  if (latestSample > prevSample) {
+    *acc += (int)(((((latestSample - gyroBias) - prevSample) / 2) + prevSample) * gyroScaler) * (float)(currentSample - lastSample) / 1000.0 * 8.0;
+  } else if (prevSample > latestSample) {
+    *acc += ((((prevSample - (latestSample - gyroBias)) / 2.0) + latestSample) * gyroScaler) * (currentSample - lastSample) / 1000.0 * 8.0;
   }
   lastSample = currentSample; 
 }
