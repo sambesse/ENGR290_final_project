@@ -14,12 +14,11 @@ void initPositionModel(float& ori) {
 
 void tickModel(int16_t &latestSample) {
   currentSample = millis();
-  if(latestSample - gyroBias > 50 || latestSample - gyroBias < -50) { //only take values that differ from the 0 point.
-    if (latestSample > prevSample) {
-      *acc += (int)((((latestSample - prevSample) / 2) + prevSample) * gyroScaler) * (float)(currentSample - lastSample) / 1000.0 * 8.0;
-    } else if (prevSample > latestSample) {
-      *acc += ((((prevSample - latestSample) / 2.0) + latestSample) * gyroScaler) * (currentSample - lastSample) / 1000.0 * 8.0;
-    }
+  latestSample -= gyroBias;
+  if (latestSample > prevSample) {
+    *acc += (int)((((latestSample - prevSample) / 2) + prevSample) * gyroScaler) * (float)(currentSample - lastSample) / 1000.0 * 8.0;
+  } else if (prevSample > latestSample) {
+    *acc += ((((prevSample - latestSample) / 2.0) + latestSample) * gyroScaler) * (currentSample - lastSample) / 1000.0 * 8.0;
   }
   lastSample = currentSample; 
 }
@@ -33,6 +32,7 @@ void calibrateGyro() {
   int16_t temp = 0;
   for(uint8_t i = 0; i < 10; i++) {
     readRegN(GYRO_YAW_START, &temp, 1);
+    delay(8); //attempt to prevent I2C crashes
     sum += temp;
   }
   gyroBias = sum / 10.0f;
