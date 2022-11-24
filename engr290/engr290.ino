@@ -46,7 +46,10 @@ void setup() {
   pinMode(7, OUTPUT);
   digitalWrite(7, HIGH); //turn on lift fan
   analogReference(5);
+  turnMiddle();
+  delay(500);
   turnLeft();
+
 }
 
 void loop() {
@@ -134,6 +137,6 @@ void turnRight() {
   OCR0A = SERVO_RIGHT;
 }
 
-void turnStraight() {
+void turnMiddle() {
   OCR0A = SERVO_MIDDLE;
 }
