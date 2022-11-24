@@ -2,6 +2,7 @@
 #include "TWI.h"
 #include "sensors.h"
 #include "timing.h"
+#include "position.h"
 
 void turnLeft();
 void turnRight();
@@ -28,28 +29,31 @@ enum State {STRAIGHT, TURNING};
 State state = STRAIGHT;
 USSensorData frontSensor;
 SensorData rawData;
+PositionData posData;
 uint8_t semaphore = 0;
 uint8_t cnt = 0;
 uint8_t LNR = 0;
 
 void setup() {
   Serial.begin(9600); // comment out for actual run
-  //delay(50);
+  delay(50);
   Serial.println("start");
   rawData.leftSensorData = 0;
   rawData.rightSensorData = 0;
   rawData.frontSensorData = 0;
   rawData.yawRate = 0;
+  posData.orientation = 0;
   initTiming();
   initIMU();
-  //initFrontSensor(&frontSensor);                                                                                                                                                                                                                                                                                 digitalWrite(4, HIGH);
+  //calibrateGyro();
+  initFrontSensor(&frontSensor);
+  initPositionModel(posData.orientation);
   pinMode(7, OUTPUT);
   digitalWrite(7, HIGH); //turn on lift fan
   analogReference(5);
-  turnMiddle();
-  delay(500);
-  turnLeft();
-
+  turnStraight();
+  setThrust(99);
+  Serial.println("end");
 }
 
 void loop() {
@@ -62,23 +66,16 @@ void loop() {
   //*/
   //*
   if(semaphore & IMU_SEMAPHORE) {
-    Serial.println("inside IMU semaphore loop");
-    readRegN(GYRO_YAW_START, 2, &rawData.yawRate);
+    //Serial.println("inside IMU semaphore loop");
+    readRegN(GYRO_YAW_START, 1, &rawData.yawRate);
+    tickModel(rawData.yawRate);
     semaphore &= ~IMU_SEMAPHORE;
   }
   //*/
-  /*
-  if(semaphore & TWI_DATA_READY_SEMAPHORE) {
-    receiveTWI(&rawData.yawRate);
-    Serial.print("received yaw rate: ");
-    Serial.println(rawData.yawRate);
-    semaphore &= ~TWI_DATA_READY_SEMAPHORE;
-  }
-  //*/
-  /*
+  //*
   if(frontSensor.semaphore & DATA_READY) {
     rawData.frontSensorData = frontSensor.pulseLength;
-    Serial.println(rawData.frontSensorData);
+    //Serial.println(rawData.frontSensorData);
     frontSensor.semaphore &= ~DATA_READY;
   }
   //*/
@@ -92,20 +89,21 @@ void loop() {
           turnRight();
         }
         state = TURNING;
+        resetReference();
       }
-    } else if (rawData.yawRate > 80 && rawData.yawRate < 100) {
+    } else if ((posData.orientation > 80 && posData.orientation < 100) || (posData.orientation < -80 && posData.orientation > -100) ) {
       turnStraight();
       state = STRAIGHT; 
     }
-    semaphore &= ~CONTROL_SEMAPHORE
+    semaphore &= ~CONTROL_SEMAPHORE;
   }
   //*/
   //*
   Serial.print("left sensor: "); Serial.println(rawData.leftSensorData);
   Serial.print("right sensor: "); Serial.println(rawData.rightSensorData); 
-  
-  //Serial.print("front sensor: "); delay(50); Serial.println(rawData.frontSensorData); delay(50); 
-  Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
+  //Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
+  Serial.print("angle: "); Serial.println(posData.orientation);
+  Serial.print("front: "); Serial.println(rawData.frontSensorData);
   //*/
   /*
   if(semaphore & CONTROL_SEMAPHORE) {
@@ -137,6 +135,10 @@ void turnRight() {
   OCR0A = SERVO_RIGHT;
 }
 
-void turnMiddle() {
+void turnStraight() {
   OCR0A = SERVO_MIDDLE;
+}
+
+void setThrust(uint8_t strength) {
+  OCR0B = (strength) * 255 / 100;
 }

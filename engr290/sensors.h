@@ -14,8 +14,6 @@
 * P17 IMU
 */
 
-
-
 #define LEFT_IR_PIN (A0) //TODO make this correct
 #define RIGHT_IR_PIN (A1) //TODO make this correct
 //constants fron US sensor semaphore
@@ -38,13 +36,9 @@ typedef struct {
 //init function for IMU
 void initIMU();
 
-//setups up pointers and starts the conversion
-void startIRReading(ADCData* dataPtr); 
-
 //sets up the interrupt and pointers
 void initFrontSensor(USSensorData* frontSensorData); 
 
-//initiailze ADC needed for reading IR sensors
-void initIRSensors();
+void calibrateIMU();
 
 #endif

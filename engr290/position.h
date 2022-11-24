@@ -1,5 +1,14 @@
-#include <Arduino.h>
+#ifndef POSITION_H
+#define POSITION_H
 
-void initPostionModel(SensorData sensors, PositonData position);
+#include "sensors.h"
 
-void tickModel(); 
+void initPositionModel(float& ori);
+
+void tickModel(int16_t &latestSample);
+
+void resetReference(); 
+
+void calibrateGyro();
+
+#endif

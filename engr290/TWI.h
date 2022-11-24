@@ -28,6 +28,8 @@
 #define ACCEL_XST 0x80
 #define ACCEL_YST 0x40
 #define ACCEL_ZST 0x20
+#define PWR_MGMT_1 0x6B
+#define PWR_MGMT_2 0x6C
 
 void initTWI();
 
