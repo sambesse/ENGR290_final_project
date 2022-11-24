@@ -3,11 +3,15 @@
 #include "sensors.h"
 #include "timing.h"
 
+void turnLeft();
+void turnRight();
+void turnStraight();
+
 typedef struct {
-  uint16_t leftSensorData;
-  uint16_t rightSensorData;
-  uint16_t frontSensorData;
-  uint16_t yawRate;
+  uint16_t leftSensorData = 0;
+  uint16_t rightSensorData = 0;
+  uint16_t frontSensorData = 0;
+  uint16_t yawRate = 0;
 } SensorData;
 
 typedef struct {
@@ -23,49 +27,45 @@ enum State {STRAIGHT, TURNING};
 
 State state = STRAIGHT;
 USSensorData frontSensor;
-ADCData leftSensor;
-ADCData rightSensor;
 SensorData rawData;
 uint8_t semaphore = 0;
+uint8_t cnt = 0;
+uint8_t LNR = 0;
 
 void setup() {
   Serial.begin(9600); // comment out for actual run
-  delay(50);
+  //delay(50);
   Serial.println("start");
   rawData.leftSensorData = 0;
   rawData.rightSensorData = 0;
   rawData.frontSensorData = 0;
-  rawData.yawRate = 0; 
-  leftSensor.adcMux = LEFT_SENSOR_MUX_VAL;
-  rightSensor.adcMux = RIGHT_SENSOR_MUX_VAL;
+  rawData.yawRate = 0;
   initTiming();
-  //initIMU();
-  //initIRSensors();
-  initFrontSensor(&frontSensor);
+  initIMU();
+  //initFrontSensor(&frontSensor);
+  //DDRD |= (1 << 4); //lift fan output
+  //PORTD &= (1 << 4); //turn lift fan on maybe
+  //pinMode(4, OUTPUT);
+  //                                                                                                                                                                                                                                                                                  digitalWrite(4, HIGH);
+  pinMode(7, OUTPUT);
+  digitalWrite(7, HIGH);
+  analogReference(5);
+  turnLeft();
 }
 
 void loop() {
-  /*
+  //*
   if(semaphore & IR_SEMAPHORE) {
-    Serial.println("inside ir semaphore");
-    startIRReading(&leftSensor);
-    semaphore &= ~IR_SEMAPHORE; 
+    rawData.leftSensorData = analogRead(LEFT_IR_PIN);
+    rawData.rightSensorData = analogRead(RIGHT_IR_PIN);
+    semaphore &= ~IR_SEMAPHORE;
   }
   //*/
   /*
   if(semaphore & IMU_SEMAPHORE) {
     Serial.println("inside IMU semaphore loop");
-    requestTWI(GYRO_YAW_START, 2);
+    readRegN(GYRO_YAW_START, &rawData.yawRate, 2);
     semaphore &= ~IMU_SEMAPHORE;
-  }
-  //*/
-  /*
-  if(leftSensor.semaphore & DATA_READY) {
-    Serial.println("left sensor data ready");
-    Serial.println(ADC);
-    startIRReading(&rightSensor);
-    rawData.leftSensorData = leftSensor.adcResult;
-    leftSensor.semaphore &= ~DATA_READY;
   }
   //*/
   /*
@@ -77,14 +77,6 @@ void loop() {
   }
   //*/
   /*
-  if(rightSensor.semaphore & DATA_READY) {
-    Serial.println("right sensor data ready");
-    Serial.println(ADC);
-    rawData.rightSensorData = rightSensor.adcResult;
-    rightSensor.semaphore &= ~DATA_READY;
-  }
-  //*/
-  //*
   if(frontSensor.semaphore & DATA_READY) {
     rawData.frontSensorData = frontSensor.pulseLength;
     Serial.println(rawData.frontSensorData);
@@ -92,9 +84,60 @@ void loop() {
   }
   //*/
   /*
+  if(semaphore & CONTROL_SEMAPHORE) {
+    if (state == STRAIGHT) {
+      if (rawData.frontSensorData < 400) {
+        if (rawData.leftSensorData < rawData.rightSensorData) {
+          turnLeft();
+        } else {
+          turnRight();
+        }
+        state = TURNING;
+      }
+    } else if (rawData.yawRate > 80 && rawData.yawRate < 100) {
+      turnStraight();
+      state = STRAIGHT; 
+    }
+    semaphore &= ~CONTROL_SEMAPHORE
+  }
+  //*/
+  //*
   Serial.print("left sensor: "); delay(50); Serial.println(rawData.leftSensorData); delay(50); 
   Serial.print("right sensor: "); delay(50); Serial.println(rawData.rightSensorData); delay(50); 
+  
   //Serial.print("front sensor: "); delay(50); Serial.println(rawData.frontSensorData); delay(50); 
   //Serial.print("yaw rate: "); delay(50); Serial.println(rawData.yawRate); delay(50); 
   //*/
+  /*
+  if(semaphore & CONTROL_SEMAPHORE) {
+    if (state == STRAIGHT) {
+      if (rawData.frontSensorData < 400) {
+        if (rawData.leftSensorData < rawData.rightSensorData) {
+          turnLeft();
+        } else {
+          turnRight();
+        }
+        state = TURNING;
+      }
+    } else if (cnt++ >= 100) {
+      turnStraight();
+      cnt = 0;
+      state = STRAIGHT; 
+    }
+    semaphore &= ~CONTROL_SEMAPHORE;
+  }
+  //*/
+  //turnRight();
+}
+
+void turnLeft() {
+  OCR0A = SERVO_LEFT;
+}
+
+void turnRight() {
+  OCR0A = SERVO_RIGHT;
+}
+
+void turnStraight() {
+  OCR0A = SERVO_MIDDLE;
 }
