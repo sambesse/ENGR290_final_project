@@ -3,6 +3,8 @@
 
 #include "sensors.h"
 
+#define GYRO_BIAS (-300)
+
 void initPositionModel(float& ori);
 
 void tickModel(int16_t &latestSample);

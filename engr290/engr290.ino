@@ -4,8 +4,8 @@
 #include "timing.h"
 #include "position.h"
 
-#define STOP_DISTANCE (800)
-#define SLOW_DISTANCE (1000)
+#define STOP_DISTANCE (350)
+#define SLOW_DISTANCE (700)
 
 #define SLOW_ANGLE (45)
 #define STOP_ANGLE (90)
@@ -52,6 +52,7 @@ void setup() {
   posData.orientation = 0;
   initTiming();
   initIMU();
+  delay(50);
   //calibrateGyro();
   initFrontSensor(&frontSensor);
   initPositionModel(posData.orientation);
@@ -73,8 +74,10 @@ void loop() {
   //*/
   //*
   if(semaphore & IMU_SEMAPHORE) {
-    //Serial.println("inside IMU semaphore loop");
+    Serial.println("inside IMU semaphore loop");
     readRegN(GYRO_YAW_START, 1, &rawData.yawRate);
+    delay(1);
+    Serial.println("after IMU read");
     tickModel(rawData.yawRate);
     if (posData.orientation < 0) {
       posData.absOrientation = -posData.orientation;
@@ -92,40 +95,46 @@ void loop() {
   }
   //*/
   //*
-  Serial.print("left sensor: "); Serial.println(rawData.leftSensorData);
-  Serial.print("right sensor: "); Serial.println(rawData.rightSensorData); 
-  //Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
-  Serial.print("angle: "); Serial.println(posData.orientation);
-  Serial.print("front: "); Serial.println(rawData.frontSensorData);
+  //Serial.print("left sensor: "); Serial.println(rawData.leftSensorData);
+  //Serial.print("right sensor: "); Serial.println(rawData.rightSensorData); 
+  
+  //Serial.print("front: "); Serial.println(rawData.frontSensorData);
+  //Serial.print("State: "); Serial.println(state);
   //*/
   //*
   if(semaphore & CONTROL_SEMAPHORE) {
+    Serial.println("inside control");
     if (state == STRAIGHT) {
-      if(rawData.yawRate > 50) {  //risky and probably bad attempt at active straightening
-        OCR0A--; //not sure if this should be plus
-      } else if (rawData.yawRate < -50) {
-        OCR0A++; //^^
-      }
-      if (rawData.frontSensorData < SLOW_DISTANCE) {
+      if (rawData.frontSensorData < SLOW_DISTANCE && rawData.frontSensorData > STOP_DISTANCE) {
+        Serial.println("slowing");
+        Serial.print("front: "); Serial.println(rawData.frontSensorData);
         setThrust((rawData.frontSensorData - STOP_DISTANCE) / (SLOW_DISTANCE - STOP_DISTANCE));
       } else if (rawData.frontSensorData <= STOP_DISTANCE ) {
+        Serial.println("Stopping");
+        Serial.print("front: "); Serial.println(rawData.frontSensorData);
         setThrust(0);
         if (rawData.leftSensorData < rawData.rightSensorData) {
           turnLeft();
+          Serial.print("turning left, left val: "); Serial.print(rawData.leftSensorData); Serial.print("right val: "); Serial.println(rawData.rightSensorData);
         } else {
           turnRight();
         }
+        
         state = TURNING;
       }
     } else {
-      if (posData.absOrientation >= SLOW_ANGLE) {
+      Serial.println("turning");
+      Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
+      Serial.print("angle: "); Serial.println(posData.absOrientation);
+      if (posData.absOrientation >= SLOW_ANGLE && posData.absOrientation < STOP_ANGLE) {
         setThrust((posData.absOrientation - SLOW_ANGLE) / (SLOW_ANGLE - STOP_ANGLE));
       } else if (posData.absOrientation >= STOP_ANGLE) {
+        Serial.println("going back to straight");
         setThrust(0);
         turnStraight();
         state = STRAIGHT;
-      }
-      
+        resetReference(); 
+      } 
     }
     semaphore &= ~CONTROL_SEMAPHORE;
   }
