@@ -60,7 +60,7 @@ void setup() {
   digitalWrite(7, HIGH); //turn on lift fan
   analogReference(5);
   turnStraight();
-  setThrust(99);
+  setThrust(0);
   Serial.println("end");
 }
 
@@ -74,10 +74,10 @@ void loop() {
   //*/
   //*
   if(semaphore & IMU_SEMAPHORE) {
-    Serial.println("inside IMU semaphore loop");
+    //Serial.println("inside IMU semaphore loop");
     readRegN(GYRO_YAW_START, 1, &rawData.yawRate);
-    delay(1);
-    Serial.println("after IMU read");
+    //delay(1);
+    //Serial.println("after IMU read");
     tickModel(rawData.yawRate);
     if (posData.orientation < 0) {
       posData.absOrientation = -posData.orientation;
@@ -98,10 +98,10 @@ void loop() {
   //Serial.print("left sensor: "); Serial.println(rawData.leftSensorData);
   //Serial.print("right sensor: "); Serial.println(rawData.rightSensorData); 
   
-  //Serial.print("front: "); Serial.println(rawData.frontSensorData);
+  Serial.print("front: "); Serial.println(rawData.frontSensorData);
   //Serial.print("State: "); Serial.println(state);
   //*/
-  //*
+  /*
   if(semaphore & CONTROL_SEMAPHORE) {
     Serial.println("inside control");
     if (state == STRAIGHT) {
