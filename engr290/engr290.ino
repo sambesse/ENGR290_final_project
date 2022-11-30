@@ -13,6 +13,8 @@
 void turnLeft();
 void turnRight();
 void turnStraight();
+void setThrust(uint8_t strength);
+void setLift(uint8_t lift);
 
 typedef struct {
   uint16_t leftSensorData = 0;
@@ -52,15 +54,15 @@ void setup() {
   posData.orientation = 0;
   initTiming();
   initIMU();
-  delay(50);
+  delay(75);
   //calibrateGyro();
   initFrontSensor(&frontSensor);
   initPositionModel(posData.orientation);
-  pinMode(7, OUTPUT);
-  digitalWrite(7, HIGH); //turn on lift fan
+  setLift(50);
   analogReference(5);
+  delay(500);
   turnStraight();
-  setThrust(0);
+  setThrust(100);
   Serial.println("end");
 }
 
@@ -158,4 +160,8 @@ void turnStraight() {
 
 void setThrust(uint8_t strength) {
   OCR0B = (strength) * 255 / 100;
+}
+
+void setLift(uint8_t lift) {
+  OCR1A = (lift) * 65535 / 100;
 }

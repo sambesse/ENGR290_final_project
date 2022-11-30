@@ -40,6 +40,8 @@ void initFrontSensor(USSensorData* frontSensorData) {
   DDRD &= ~(1 << 3);
   EICRA = 0x04; //set interrupt 1 for any logic change 
   EIMSK = 0x02; //enable interrupt 1
-  TCCR1A = 0;
+  TCCR1A = 0x82;
   TCCR1B = 3; //set up prescaler of 256 
+  OCR1A = 0;
+  DDRB |= (1 << 1);
 }

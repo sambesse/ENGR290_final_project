@@ -25,5 +25,5 @@ void initTiming () { //timer 0 is going to be used to set the semaphore.
   TCCR0A = 0xA3; // fast pwm mode
   TCCR0B = 0x04; //prescalar = 8, period of 2040us
   OCR0A = SERVO_MIDDLE;// neutral angle
-  OCR0B = 250; //full
+  OCR0B = 0; //full
 }
