@@ -1,14 +1,16 @@
 #include "timing.h"
 uint16_t count = 0;
 extern uint8_t semaphore; 
+extern uint8_t timer2cnt; 
 
 ISR(TIMER2_OVF_vect) { // overflows every 256us 
     count++;
+    timer2cnt++;
     semaphore |= IMU_SEMAPHORE;
     if (count == 5) {
       semaphore |= CONTROL_SEMAPHORE;
     }
-    if (count == 20) {
+    if (count == 5) {
       semaphore |= IR_SEMAPHORE;
       count = 0;
     }

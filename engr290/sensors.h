@@ -9,7 +9,7 @@
 * P16 right IR sensor
 * P2 servo motor
 * P13 front US Sensor
-* P17 lift fan
+* P11 lift fan
 * P3 thrust fan
 * P17 IMU
 */

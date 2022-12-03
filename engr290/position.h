@@ -3,7 +3,7 @@
 
 #include "sensors.h"
 
-#define GYRO_BIAS (-300)
+#define GYRO_BIAS (-260)
 
 void initPositionModel(float& ori);
 
