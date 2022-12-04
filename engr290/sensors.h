@@ -9,7 +9,7 @@
 * P16 right IR sensor
 * P2 servo motor
 * P13 front US Sensor
-* P17 lift fan
+* P11 lift fan
 * P3 thrust fan
 * P17 IMU
 */
@@ -23,7 +23,7 @@
 typedef struct {
   uint16_t pulseStart;
   uint16_t pulseEnd;
-  uint16_t pulseLength;
+  uint32_t pulseLength;
   uint8_t semaphore;
 } USSensorData;
 
