@@ -23,7 +23,7 @@
 typedef struct {
   uint16_t pulseStart;
   uint16_t pulseEnd;
-  uint16_t pulseLength;
+  uint32_t pulseLength;
   uint8_t semaphore;
 } USSensorData;
 

@@ -8,7 +8,7 @@
 #define SLOW_DISTANCE (120)
 
 #define SLOW_ANGLE (20)
-#define STOP_ANGLE (22)
+#define STOP_ANGLE (18)
 
 #define LIFT_ACTIVE (75)
 #define LIFT_IDLE (10)
@@ -29,7 +29,7 @@ void setLift(uint8_t lift);
 typedef struct {
   uint16_t leftSensorData = 0;
   uint16_t rightSensorData = 0;
-  uint16_t frontSensorData = 100;
+  uint32_t frontSensorData = 100;
   int16_t yawRate = 0;
 } SensorData;
 
@@ -43,9 +43,9 @@ typedef struct {
   //float vel; //potentially leave this in there for the velocity gotten from acc integration if we choose to implement that
 } PositionData;
 
-enum State {STRAIGHT, TURNING};
+enum State {STRAIGHT, TURNING, STARTUP};
 
-State state = STRAIGHT;
+State state = STARTUP;
 USSensorData frontSensor;
 SensorData rawData;
 PositionData posData;
@@ -53,6 +53,7 @@ volatile uint8_t semaphore = 0;
 volatile uint8_t timer2cnt = 0;
 uint8_t cnt = 0;
 uint8_t LNR = 0;
+uint32_t frontBuf[4] = {0, 0, 0, 0};
 
 void setup() {
   Serial.begin(9600); // comment out for actual run
@@ -73,7 +74,8 @@ void setup() {
   analogReference(5);
   delay(500);
   setLift(LIFT_IDLE*2);
-  turnStraight();
+  //turnStraight();
+  OCR0A = SERVO_START;
   setThrust(THRUST_STRAIGHT);
   delay(200);
   setLift(LIFT_ACTIVE);
@@ -109,9 +111,24 @@ void loop() {
   //*/
   //*
   if(frontSensor.semaphore & DATA_READY) {
-    //if (frontSensor.pulseLength > 40)
-      rawData.frontSensorData = frontSensor.pulseLength;
+    uint8_t stopping = 0;
+    frontBuf[cnt%4] = frontSensor.pulseLength;
+    if (frontBuf[cnt%4] > STOP_DISTANCE) {
+      rawData.frontSensorData = frontBuf[cnt%4];
+    } else {
+      for(uint8_t i = 0; i < 4; i++) {
+        if(frontBuf[i] <= STOP_DISTANCE) {
+          stopping++;
+        } else {
+          rawData.frontSensorData = frontBuf[i];
+        }
+      }
+      if(stopping >= 4) {
+        rawData.frontSensorData = frontBuf[cnt%4];
+      }
+    }
     //Serial.println(rawData.frontSensorData);
+    cnt++;
     frontSensor.semaphore &= ~DATA_READY;
   }
   //*/
@@ -147,15 +164,19 @@ void loop() {
         resetReference();
       } else {
         if (rawData.leftSensorData >= TOUCHING) {
-          Serial.println("left touching");
-          slightRight();
+          //Serial.println("left touching");
+          //slightRight();
+          setLift(100);
+          setThrust(100);
         }
         if (rawData.rightSensorData >= TOUCHING) {
-          Serial.println("right touching");
-          slightLeft();
+          //Serial.println("right touching");
+          //slightLeft();
+          setLift(100);
+          setThrust(100);
         }
       }
-    } else {
+    } else if (state == TURNING) {
       Serial.println("turning");
       //Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
       Serial.print("angle: "); Serial.println(posData.absOrientation);
@@ -173,6 +194,11 @@ void loop() {
         setLift(LIFT_ACTIVE);
         setThrust(THRUST_STRAIGHT);
       } 
+    } else if (state == STARTUP) {
+      if (cnt >= 10) {
+        state = STRAIGHT;
+        turnStraight();
+      }
     }
     semaphore &= ~CONTROL_SEMAPHORE;
   }
