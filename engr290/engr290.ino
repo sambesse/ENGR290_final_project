@@ -8,7 +8,7 @@
 #define SLOW_DISTANCE (120)
 
 #define SLOW_ANGLE (20)
-#define STOP_ANGLE (18)
+#define STOP_ANGLE (40)
 
 #define LIFT_ACTIVE (75)
 #define LIFT_IDLE (10)
@@ -35,11 +35,11 @@ typedef struct {
 
 typedef struct {
   float frontDistance; //would rather this be an int, but we'll see
-  uint16_t dl; //rate of change of left distance sensor
-  uint16_t dr; //rate of change of right distance sensor
+  int16_t dl; //rate of change of left distance sensor
+  int16_t dr; //rate of change of right distance sensor
   float orientation = 0; //yaw angle relative to starting point
   float absOrientation = 0;
-  uint16_t dxf; //rate of change of front sensor
+  int16_t df; //rate of change of front sensor
   //float vel; //potentially leave this in there for the velocity gotten from acc integration if we choose to implement that
 } PositionData;
 
@@ -114,16 +114,19 @@ void loop() {
     uint8_t stopping = 0;
     frontBuf[cnt%4] = frontSensor.pulseLength;
     if (frontBuf[cnt%4] > STOP_DISTANCE) {
+      posData.df = rawData.frontSensorData - frontBuf[cnt%4];
       rawData.frontSensorData = frontBuf[cnt%4];
     } else {
       for(uint8_t i = 0; i < 4; i++) {
         if(frontBuf[i] <= STOP_DISTANCE) {
           stopping++;
         } else {
+          posData.df = rawData.frontSensorData - frontBuf[i];
           rawData.frontSensorData = frontBuf[i];
         }
       }
       if(stopping >= 4) {
+        posData.df = rawData.frontSensorData - frontBuf[cnt%4];
         rawData.frontSensorData = frontBuf[cnt%4];
       }
     }
@@ -153,6 +156,13 @@ void loop() {
         Serial.print("front: "); Serial.println(rawData.frontSensorData);
         setLift(LIFT_IDLE);
         setThrust(0);
+        if (posData.orientation > 70) {
+          turnLeft();
+          resetReference();
+        } else if (posData.orientation < -70) {
+          turnRight();
+          resetReference();
+        }
         delay(300);
         if (rawData.leftSensorData < rawData.rightSensorData) {
           turnLeft();
@@ -180,7 +190,7 @@ void loop() {
       Serial.println("turning");
       //Serial.print("yaw rate: "); Serial.println(rawData.yawRate); 
       Serial.print("angle: "); Serial.println(posData.absOrientation);
-      delay(200);
+      //delay(200);
       setLift(LIFT_ACTIVE);
       setThrust(THRUST_TURNING);
       if (posData.absOrientation >= STOP_ANGLE) {
@@ -195,7 +205,7 @@ void loop() {
         setThrust(THRUST_STRAIGHT);
       } 
     } else if (state == STARTUP) {
-      if (cnt >= 10) {
+      if (cnt >= 20) {
         state = STRAIGHT;
         turnStraight();
       }
